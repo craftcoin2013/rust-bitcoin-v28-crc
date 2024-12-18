@@ -23,6 +23,7 @@ use prelude::*;
 
 use core::default::Default;
 use hash_types::{BlockHash, TxMerkleNode};
+use hashes::_export::_core::fmt;
 
 use hashes::hex::{HexIterator, Error as HexError, FromHex};
 use hashes::sha256d;
@@ -33,6 +34,11 @@ use blockdata::block::{Block, BlockHeader};
 use blockdata::witness::Witness;
 use network::constants::Network;
 use util::uint::Uint256;
+
+const GENESIS_BLOCK_HASH_BITCOIN: [u8; 32] = [100, 169, 20, 23, 70, 203, 190, 6, 199, 225, 164, 183, 242, 171, 185, 104, 204, 222, 186, 102, 205, 103, 193, 173, 209, 9, 27, 41, 219, 0, 87, 142];
+const GENESIS_BLOCK_HASH_TESTNET: [u8; 32] = [0, 0, 0, 0, 9, 51, 234, 1, 173, 14, 233, 132, 32, 151, 121, 186, 174, 195, 206, 217, 15, 163, 244, 8, 113, 149, 38, 248, 215, 127, 73, 67];
+const GENESIS_BLOCK_HASH_SIGNET: [u8; 32] = [155, 123, 206, 88, 153, 144, 98, 182, 59, 251, 24, 88, 104, 19, 196, 36, 145, 250, 50, 244, 89, 29, 141, 48, 67, 203, 79, 169, 229, 81, 84, 27];
+const GENESIS_BLOCK_HASH_REGTEST: [u8; 32] = [0, 0, 0, 0, 9, 51, 234, 1, 173, 14, 233, 132, 32, 151, 121, 186, 174, 195, 206, 217, 15, 163, 244, 8, 113, 149, 38, 248, 215, 127, 73, 67];
 
 /// The maximum allowable sequence number
 pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;
@@ -225,6 +231,27 @@ pub fn genesis_block(network: Network) -> Block {
                 },
                 txdata,
             }
+        }
+    }
+}
+
+/// The uniquely identifying hash of the target blockchain.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ChainHash([u8; 32]);
+impl_array_newtype!(ChainHash, u8, 32);
+impl_bytes_newtype!(ChainHash, 32);
+
+impl ChainHash {
+    /// Returns the hash of the `network` genesis block for use as a chain hash.
+    ///
+    /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
+    /// for specification.
+    pub fn using_genesis_block(network: Network) -> Self {
+        match network {
+            Network::Bitcoin => ChainHash(GENESIS_BLOCK_HASH_BITCOIN),
+            Network::Testnet => ChainHash(GENESIS_BLOCK_HASH_TESTNET),
+            Network::Signet => ChainHash(GENESIS_BLOCK_HASH_SIGNET),
+            Network::Regtest => ChainHash(GENESIS_BLOCK_HASH_REGTEST),
         }
     }
 }
